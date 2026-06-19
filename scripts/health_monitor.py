@@ -1,11 +1,18 @@
 import os
 import sqlite3
+import logging
 import requests
+
+# Configure logging to output only errors to error.log
+logging.basicConfig(
+    filename="error.log",
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 def load_env(filepath=".env"):
     """
     Loads environment variables from a .env file.
-    Fills os.environ if the file exists.
     """
     if os.path.exists(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
@@ -19,18 +26,18 @@ def get_db_connection(db_path):
     """
     Creates and returns a connection to the SQLite database.
     """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        logging.error(f"Database connection failed: {str(e)}")
+        raise
 
 def fetch_activity_drops(conn, threshold_percentage):
     """
     Queries the database using raw SQL to find clients with a activity drop
     greater than or equal to the threshold percentage.
-    
-    Compares:
-    - Current week: Last 7 days (days 0 to 6)
-    - Previous week: The 7 days prior (days 7 to 13)
     """
     query = """
         WITH current_week AS (
@@ -63,9 +70,13 @@ def fetch_activity_drops(conn, threshold_percentage):
             ELSE ((pw.previous_logins - COALESCE(cw.current_logins, 0)) * 100.0) / pw.previous_logins
         END >= ?;
     """
-    cursor = conn.cursor()
-    cursor.execute(query, (threshold_percentage,))
-    return cursor.fetchall()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (threshold_percentage,))
+        return cursor.fetchall()
+    except Exception as e:
+        logging.error(f"Query execution failed: {str(e)}")
+        raise
 
 def send_slack_alert(webhook_url, client_name, drop_percentage, am_slack_id):
     """
@@ -81,18 +92,29 @@ def send_slack_alert(webhook_url, client_name, drop_percentage, am_slack_id):
         response = requests.post(webhook_url, json=payload, timeout=10)
         response.raise_for_status()
         print(f"Alert sent successfully for client: {client_name}")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to send alert for client {client_name}. Error: {e}")
+    except Exception as e:
+        logging.error(f"Webhook POST failed for client '{client_name}': {str(e)}")
+        raise
 
-def main():
+def run_monitor():
+    """
+    Orchestrates the loading, querying, and alerting flow.
+    Can be imported by scheduler.py.
+    """
     load_env()
     
     webhook_url = os.getenv("WEBHOOK_URL")
-    threshold = float(os.getenv("DROP_THRESHOLD", "40"))
+    threshold_str = os.getenv("DROP_THRESHOLD", "40")
     db_path = os.getenv("DATABASE_PATH", "db/revops.db")
     
+    try:
+        threshold = float(threshold_str)
+    except ValueError as e:
+        logging.error(f"Invalid DROP_THRESHOLD config: '{threshold_str}'. Error: {str(e)}")
+        return
+
     if not webhook_url:
-        print("Error: WEBHOOK_URL is not configured in the environment or .env file.")
+        logging.error("Configuration failed: WEBHOOK_URL is not set.")
         return
 
     try:
@@ -108,8 +130,15 @@ def main():
                 )
         finally:
             conn.close()
-    except sqlite3.Error as db_err:
-        print(f"Database error occurred: {db_err}")
+    except Exception as e:
+        logging.error(f"Health monitor run execution failed: {str(e)}")
+
+def main():
+    try:
+        run_monitor()
+    except Exception as e:
+        logging.error(f"Critical execution error: {str(e)}")
+        exit(1)
 
 if __name__ == "__main__":
     main()
