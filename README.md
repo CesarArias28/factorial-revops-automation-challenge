@@ -9,8 +9,8 @@ Automatización en Python. Base de datos SQLite (logs de uso). Integración HTTP
 ## 3. Cómo Ejecutarlo
 ```bash
 # 1. Clonar el repositorio e ingresar al directorio
-git clone https://github.com/CesarArias28/RevOps_SlackAlerts.git
-cd RevOps_SlackAlerts
+git clone https://github.com/CesarArias28/factorial-revops-automation-challenge.git
+cd factorial-revops-automation-challenge
 
 # 2. Configurar entorno virtual e instalar dependencias
 python -m venv venv
