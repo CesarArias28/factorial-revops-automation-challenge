@@ -29,7 +29,7 @@ La solución está construida sobre un stack ligero y portable de Python, diseñ
 * **Base de datos SQLite:** Almacena de forma estructurada los datos históricos de uso de la plataforma.
 * **Consulta SQL Optimizada:** Utiliza CTEs (*Common Table Expressions*) para realizar agrupaciones agregadas y cálculo de desviaciones directamente en el motor de base de datos, evitando sobrecarga en la memoria de Python.
 * **Manejo de Errors de Producción:** Todo el flujo (conexiones, consultas y peticiones HTTP) está encapsulado en bloques de control de excepciones que registran errores detallados en un archivo `error.log` local para auditorías y debugging inmediato, manteniendo el servicio en ejecución.
-* **Simulador de CRON Integrado:** Ejecuta la rutina como un demonio en segundo plano todos los lunes a las 08:00 AM usando la biblioteca `schedule`.
+* **Simulador de CRON Integrado:** Ejecuta la rutina en segundo plano todos los lunes a las 08:00 AM usando la biblioteca `schedule`.
 
 ---
 
