@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS clients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    am_slack_id TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS usage_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    login_count INTEGER NOT NULL DEFAULT 0,
+    log_date TEXT NOT NULL, -- Format: YYYY-MM-DD
+    FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+);

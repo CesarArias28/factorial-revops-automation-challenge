@@ -1,0 +1,24 @@
+# Environment files
+.env
+.env.local
+
+# Databases
+db/*.db
+db/*.sqlite3
+
+# Python cache and environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.ipynb_checkpoints/
+
+# OS metadata
+.DS_Store
+Thumbs.db
